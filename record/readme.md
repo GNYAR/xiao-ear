@@ -19,4 +19,4 @@ Save recorded sound samples as .wav audio files to a microSD card.
 
 The files will be saved on the SD card as `label.1.wav`, `label.2.wav`, `label.3.wav`, etc.
 
-Next: Keyword Spotting
+Next: [Keyword Spotting](/kws/readme.md)
