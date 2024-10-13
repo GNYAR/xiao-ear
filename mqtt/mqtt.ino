@@ -11,11 +11,13 @@ const char* kMqttId = "xiao";
 const char* kMqttPubTopic = "PUB/TOPIC";
 const char* kMqttSubTopic = "SUB/TOPIC";
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length)
+{
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (int i = 0;i < length;i++) {
+  for (int i = 0;i < length;i++)
+  {
     Serial.print((char)payload[i]);
   }
   Serial.println();
@@ -24,18 +26,22 @@ void callback(char* topic, byte* payload, unsigned int length) {
 WiFiClient esp_client;
 PubSubClient client(esp_client);
 
-void reconnect() {
+void reconnect()
+{
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!client.connected())
+  {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(kMqttId)) {
+    if (client.connect(kMqttId))
+    {
       Serial.println("connected");
       // connect announcement
       client.publish(kMqttPubTopic, "connect");
       client.subscribe(kMqttSubTopic);
     }
-    else {
+    else
+    {
       Serial.printf("failed, rc=%d try again in 5 seconds\n", client.state());
       delay(5000);
     }
@@ -47,7 +53,8 @@ void setup()
   Serial.begin(115200);
 
   WiFi.begin(kWiFiSSID, kWiFiPassword);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(1000);
     Serial.println("Connecting to WiFi...");
   }
@@ -59,7 +66,8 @@ void setup()
 
 void loop()
 {
-  if (!client.connected()) {
+  if (!client.connected())
+  {
     reconnect();
   }
   client.loop();

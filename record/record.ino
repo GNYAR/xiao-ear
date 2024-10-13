@@ -17,36 +17,44 @@ int fileNumber = 1;
 String baseFileName;
 bool isRecording = false;
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  while (!Serial) ;
-  
+  while (!Serial);
+
   I2S.setAllPins(-1, 42, 41, -1, -1);
-  if (!I2S.begin(PDM_MONO_MODE, SAMPLE_RATE, SAMPLE_BITS)) {
+  if (!I2S.begin(PDM_MONO_MODE, SAMPLE_RATE, SAMPLE_BITS))
+  {
     Serial.println("Failed to initialize I2S!");
-    while (1) ;
+    while (1);
   }
-  if(!SD.begin(21)){
+  if (!SD.begin(21))
+  {
     Serial.println("Failed to mount SD Card!");
-    while (1) ;
+    while (1);
   }
   Serial.printf("Enter with the label name\n");
-  //record_wav();
 }
 
-void loop() {
-  if (Serial.available() > 0) {
+void loop()
+{
+  if (Serial.available() > 0)
+  {
     String command = Serial.readStringUntil('\n');
     command.trim();
-    if (command == "rec") {
+    if (command == "rec")
+    {
       isRecording = true;
-    } else {
+    }
+    else
+    {
       baseFileName = command;
       fileNumber = 1; // reset file number each time a new base file name is set
       Serial.printf("Send rec for starting recording label \n");
     }
   }
-  if (isRecording && baseFileName != "") {
+  if (isRecording && baseFileName != "")
+  {
     String fileName = "/" + baseFileName + "." + String(fileNumber) + ".wav";
     fileNumber++;
     record_wav(fileName);
@@ -59,9 +67,9 @@ void record_wav(String fileName)
 {
   uint32_t sample_size = 0;
   uint32_t record_size = (SAMPLE_RATE * SAMPLE_BITS / 8) * RECORD_TIME;
-  uint8_t *rec_buffer = NULL;
+  uint8_t* rec_buffer = NULL;
   Serial.printf("Start recording ...\n");
-   
+
   File file = SD.open(fileName.c_str(), FILE_WRITE);
   // Write the header to the WAV file
   uint8_t wav_header[WAV_HEADER_SIZE];
@@ -69,30 +77,37 @@ void record_wav(String fileName)
   file.write(wav_header, WAV_HEADER_SIZE);
 
   // PSRAM malloc for recording
-  rec_buffer = (uint8_t *)ps_malloc(record_size);
-  if (rec_buffer == NULL) {
+  rec_buffer = (uint8_t*)ps_malloc(record_size);
+  if (rec_buffer == NULL)
+  {
     Serial.printf("malloc failed!\n");
-    while(1) ;
+    while (1);
   }
   Serial.printf("Buffer: %d bytes\n", ESP.getPsramSize() - ESP.getFreePsram());
 
   // Start recording
   esp_i2s::i2s_read(esp_i2s::I2S_NUM_0, rec_buffer, record_size, &sample_size, portMAX_DELAY);
-  if (sample_size == 0) {
+  if (sample_size == 0)
+  {
     Serial.printf("Record Failed!\n");
-  } else {
+  }
+  else
+  {
     Serial.printf("Record %d bytes\n", sample_size);
   }
 
   // Increase volume
-  for (uint32_t i = 0; i < sample_size; i += SAMPLE_BITS/8) {
-    (*(uint16_t *)(rec_buffer+i)) <<= VOLUME_GAIN;
+  for (uint32_t i = 0; i < sample_size; i += SAMPLE_BITS / 8)
+  {
+    (*(uint16_t*)(rec_buffer + i)) <<= VOLUME_GAIN;
   }
 
   // Write data to the WAV file
   Serial.printf("Writing to the file ...\n");
   if (file.write(rec_buffer, record_size) != record_size)
+  {
     Serial.printf("Write file Failed!\n");
+  }
 
   free(rec_buffer);
   file.close();
@@ -100,7 +115,7 @@ void record_wav(String fileName)
   Serial.printf("Send rec for a new sample or enter a new label\n\n");
 }
 
-void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample_rate)
+void generate_wav_header(uint8_t* wav_header, uint32_t wav_size, uint32_t sample_rate)
 {
   // See this for reference: http://soundfile.sapp.org/doc/WaveFormat/
   uint32_t file_size = wav_size + WAV_HEADER_SIZE - 8;
