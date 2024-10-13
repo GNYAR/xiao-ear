@@ -3,11 +3,42 @@
 
 #include <xiao-ear_inferencing.h>
 
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <string>
+
+// WiFi
+const char* kWiFiSSID = "SSID";
+const char* kWiFiPassword = "PASSWORD";
+// MQTT
+const char* kMqttServer = "broker.hivemq.com";
+const int kMqttPort = 1883;
+const char* kMqttId = "xiao_mic";
+const char* kMqttPubTopic = "PUB/TOPIC";
+
+WiFiClient esp_client;
+PubSubClient client(esp_client);
+
+void MqttConnect() {
+    // Loop until we're reconnected
+    while (!client.connected()) {
+        Serial.print("Attempting MQTT connection...");
+        // Attempt to connect
+        if (client.connect(kMqttId)) {
+            Serial.println("connected");
+            // connect announcement
+            client.publish(kMqttPubTopic, "xiao_mic connect");
+        }
+        else {
+            Serial.printf("failed, rc=%d try again in 5 seconds\n", client.state());
+            delay(5000);
+        }
+    }
+}
+
 #include <I2S.h>
 #define SAMPLE_RATE 16000U
 #define SAMPLE_BITS 16
-
-#define LED_BUILT_IN 21 
 
 /** Audio buffers, pointers and selectors */
 typedef struct {
@@ -32,10 +63,17 @@ void setup()
     Serial.begin(115200);
     // comment out the below line to cancel the wait for USB connection (needed for native USB)
     while (!Serial);
-    Serial.println("Edge Impulse Inferencing Demo");
 
-    pinMode(LED_BUILT_IN, OUTPUT); // Set the pin as output
-    digitalWrite(LED_BUILT_IN, HIGH); //Turn off
+    // connect wifi
+    WiFi.begin(kWiFiSSID, kWiFiPassword);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
+    // connect mqtt
+    client.setServer(kMqttServer, kMqttPort);
+    MqttConnect();
 
     I2S.setAllPins(-1, 42, 41, -1, -1);
     if (!I2S.begin(PDM_MONO_MODE, SAMPLE_RATE, SAMPLE_BITS)) {
@@ -103,14 +141,13 @@ void loop()
             pred_value = result.classification[ix].value;
         }
     }
-    // Display inference result
-    if (pred_index == 3) {
-        digitalWrite(LED_BUILT_IN, LOW); //Turn on
+    // publish inference result
+    ei_printf("Result: %d %s\n\n", pred_index, result.classification[pred_index].label);
+    if (!client.connected())
+    {
+        MqttConnect();
     }
-    else {
-        digitalWrite(LED_BUILT_IN, HIGH); //Turn off
-    }
-
+    client.publish(kMqttPubTopic, std::to_string(pred_index).c_str());
 
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
     ei_printf("    anomaly score: ");
