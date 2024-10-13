@@ -28,7 +28,6 @@ Building a Keyword Spotting (KWS) model and deploying it on the XIAO ESP32S3 Sen
    6. Replace the ESP-NN folder in the zip file downloaded by the Edge Impulse. (`src/edge-impulse-sdk/porting/espressif/ESP-NN`)
    7. Add zip library in Arduino IDE. (`Sketch > Include Library > Add .ZIP Library...`)
    8. Update the library name in `kws.ino`.
-   9. Compile and upload.
 
 8. MQTT Communication
 
@@ -36,6 +35,7 @@ Building a Keyword Spotting (KWS) model and deploying it on the XIAO ESP32S3 Sen
 
    1. Search and install `PubSubClient` with the library manager in Arduino IDE.
    2. Replace the WiFi and MQTT parameters in `kws.ino`.
-   3. Compile and upload.
+
+9. Compile and upload.
 
 Next: [Display](/display/readme.md)
