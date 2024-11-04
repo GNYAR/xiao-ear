@@ -5,6 +5,8 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+#define RESULT_COUNT 3
+
 // WiFi
 const char* kWiFiSSID = "SSID";
 const char* kWiFiPassword = "PASSWORD";
@@ -16,6 +18,15 @@ const char* kMqttTopic = "TOPIC";
 
 WiFiClient esp_client;
 PubSubClient client(esp_client);
+
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+
+// kws result mapping
+const char* mapping[RESULT_COUNT] = {
+  "",
+  "好",
+  "不",
+};
 
 void ConnectMqtt() {
   // Loop until we're reconnected
@@ -35,9 +46,7 @@ void ConnectMqtt() {
   }
 }
 
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
-
-void Display(char* str)
+void Display(const char* str)
 {
   u8g2.clearBuffer();
   u8g2.setCursor(0, 15);
@@ -50,16 +59,19 @@ void CallbackMqtt(char* topic, byte* payload, unsigned int length)
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-
-  u8g2.clearBuffer();
-  u8g2.setCursor(0, 15);
+  int n = 0;
   for (int i = 0;i < length;i++)
   {
-    u8g2.print((char)payload[i]);
+    int x = (char)payload[i] - '0';
+    if (-1 < x and x < 10)
+    {
+      if (n != 0) n *= 10;
+      n += x;
+    }
     Serial.print((char)payload[i]);
   }
-  u8g2.sendBuffer();
   Serial.println();
+  if (-1 < n and n < RESULT_COUNT) Display(mapping[n]);
 }
 
 void setup(void) {
